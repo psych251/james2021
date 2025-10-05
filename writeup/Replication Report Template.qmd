@@ -1,6 +1,6 @@
 ---
-title: "Replication of Study X by Sample & Sample (20xx, Psychological Science)"
-author: "Replication Author[s] (contact information)"
+title: "Replication of Study ? by Qiu & Taylor (2025, JEP:LMC)"
+author: "Madison Paron (mparon@stanford.edu)"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 format:
   html:
@@ -23,7 +23,13 @@ Original effect size, power analysis for samples to achieve 80%, 90%, 95% power 
 
 ### Planned Sample
 
-Planned sample size and/or termination rule, sampling frame, known demographics if any, preselection rules if any.
+--109 recruited participants
+---23 excluded for failing the oral vocabulary learning check (their accuracy rate was below 50% in the nal picture naming test in the oral vocabulary training phase)
+---Native standard southern British English speakers 
+----This will be changed to native USA English speakers
+---Normal or corrected-to-normal vision
+---No hearing loss or dif culties, language or reading related disorders, or attention deficits
+%Planned sample size and/or termination rule, sampling frame, known demographics if any, preselection rules if any.
 
 ### Materials
 
