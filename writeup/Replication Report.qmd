@@ -1,5 +1,5 @@
 ---
-title: "Replication of Study 2 by James et al. (2025, JEP:LMC)"
+title: "Replication of Study 2 by James et al. (2021, JEP:LMC)"
 author: "Madison Paron (mparon@stanford.edu)"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 format: 
