@@ -1,305 +1,208 @@
-/* jsPsychModule, jsPsychPlugins */
+// ---------------------- CONFIG ----------------------
+const DEFAULT_CONDITION = 'A';                      // change to 'B' or 'C' if you want a different default
+const urlCond = new URLSearchParams(location.search).get('cond');
+const CONDITION = (urlCond || DEFAULT_CONDITION).toUpperCase(); // 'A' | 'B' | 'C'
 
-// -------------------------------
-// Utilities
-// -------------------------------
+// Paths are relative to index.html inside /experiment
+const CSV_PATH = `stimuli/storyTask${CONDITION}_picOnly_spreadsheet.csv`;
+const IMG_DIR  = `stimuli/images/Picture scenes 2/`;
+const AUD_DIR  = `stimuli/audio/story_audio/`;
 
-function getURLParams() {
-  return Object.fromEntries(new URLSearchParams(window.location.search).entries());
-}
+// Column names from the CSV
+const COL_DISPLAY = 'display';
+const COL_PIC     = 'picture';
+const COL_AUDIO   = 'audio';
 
-// Simple hash → stable condition assignment (quasi-balancing without a server)
-function hash3(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-  const x = Math.abs(h) % 3;
-  return ['A','B','C'][x];
-}
+// ---------------------- INIT ------------------------
+const exp_started_at_ms = performance.now();
+let isRunning = false;     // gate for global event logging
 
-// Load a CSV (returns Promise of array of rows as objects)
-function loadCSV(url) {
-  return new Promise((resolve, reject) => {
-    Papa.parse(url, {
-      header: true,
-      dynamicTyping: true,
-      download: true,
-      skipEmptyLines: true,
-      complete: (results) => resolve(results.data),
-      error: reject
-    });
-  });
-}
+const jsPsych = initJsPsych({
+  on_finish: () => {
+    // stop logging while timeline is no longer active
+    isRunning = false;
+    detachMonitors();
 
-// Build audio file list from story rows
-function audioList(rows) {
-  const list = [];
-  rows.forEach(r => { if (r.audio) list.push(`stimuli/audio/story_audio${r.audio}`); });
-  return list;
-}
-
-// -------------------------------
-// Init jsPsych
-// -------------------------------
-const jsPsych = new jsPsychModule.JsPsych({
-  display_element: "jspsych-target",
-  on_finish: async () => {
-    // Offer local CSV save (works on GitHub Pages)
-    jsPsych.data.get().localSave('csv', `storybook_${participant_id}.csv`);
-    // Show a friendly end screen
-    document.body.innerHTML = `
-      <div class="center">
-        <h2>Thank you!</h2>
-        <p>Your data file has been downloaded.</p>
-        ${prolific_completion_code ? `<p>Prolific completion code: <strong>${prolific_completion_code}</strong></p>` : ``}
-      </div>`;
+    // show data table
+    jsPsych.data.displayData();
   }
 });
 
-const {
-  preload,
-  htmlButtonResponse,
-  audioButtonResponse,
-  audioKeyboardResponse,
-  surveyHtmlForm
-} = jsPsychPlugins;
+// --- global monitors (attached only while running) ---
+const handlers = {
+  keydown(e) {
+    safeWrite({ event: 'keydown', key: e.key, code: e.code, ts: performance.now() });
+  },
+  click(e) {
+    safeWrite({
+      event: 'click',
+      x: e.clientX, y: e.clientY,
+      target: (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : 'unknown',
+      ts: performance.now()
+    });
+  },
+  blur() {
+    safeWrite({ event: 'window_blur', ts: performance.now() });
+  },
+  focus() {
+    safeWrite({ event: 'window_focus', ts: performance.now() });
+  },
+  visibility() {
+    safeWrite({ event: 'visibility_change', state: document.visibilityState, ts: performance.now() });
+  }
+};
 
-// -------------------------------
-// Participant / condition assignment
-// -------------------------------
-const params = getURLParams();
-const prolific_pid = params.PROLIFIC_PID || params.prolific_pid || '';
-const study_id = params.STUDY_ID || '';
-const session_id = params.SESSION_ID || '';
-const prolific_completion_code = params.completion || ''; // pass via url if you like
-
-// Use stable quasi-balanced assignment if we have an ID; otherwise random
-const participant_id = prolific_pid || cryptoRandomID();
-const assigned_version = prolific_pid ? hash3(prolific_pid) : jsPsych.randomization.sampleWithoutReplacement(['A','B','C'], 1)[0];
-
-function cryptoRandomID() {
-  // short random string for non-Prolific pilots
-  return Math.random().toString(36).slice(2, 10);
+function attachMonitors() {
+  window.addEventListener('keydown', handlers.keydown);
+  window.addEventListener('click',   handlers.click);
+  window.addEventListener('blur',    handlers.blur);
+  window.addEventListener('focus',   handlers.focus);
+  document.addEventListener('visibilitychange', handlers.visibility);
 }
 
-// Add global properties
-jsPsych.data.addProperties({
-  participant_id,
-  prolific_pid,
-  study_id,
-  session_id,
-  assigned_version
-});
+function detachMonitors() {
+  window.removeEventListener('keydown', handlers.keydown);
+  window.removeEventListener('click',   handlers.click);
+  window.removeEventListener('blur',    handlers.blur);
+  window.removeEventListener('focus',   handlers.focus);
+  document.removeEventListener('visibilitychange', handlers.visibility);
+}
 
-// -------------------------------
-// Consent HTML (edit as needed)
-// -------------------------------
-const CONSENT_HTML = `
-  <div class="consent-box">
-    <h2>Consent to Participate</h2>
-    <p>You are invited to take part in a research study on language learning.
-    Your participation is voluntary and you may stop at any time.
-    No identifying information will be collected. Audio will be played.</p>
-    <p>By clicking "I agree", you consent to participate.</p>
-  </div>
-`;
+// Safe writer: no-op after the experiment ends (prevents TypeError)
+function safeWrite(obj) {
+  if (!isRunning) return;
+  try { jsPsych.data.write(obj); } catch (_) { /* ignore */ }
+}
 
-// -------------------------------
-// Timeline
-// -------------------------------
+const trim = (s) => (typeof s === 'string' ? s.trim() : s);
+
+// ---------------------- BUILD & RUN ------------------
 const timeline = [];
 
-// Welcome
+// Intro screen
 timeline.push({
-  type: htmlButtonResponse,
-  stimulus: `<h1>Welcome!</h1><p>In this study you will listen to a short illustrated story (audio only) and answer a few questions.</p>`,
-  choices: ['Continue']
-});
-
-// Sound check
-timeline.push({
-  type: audioButtonResponse,
-  stimulus: 'stimuli/audio/check_tone.wav', // put a short WAV/MP3 here
-  prompt: `<p>Please make sure your volume is comfortable.<br/>Could you hear the sound clearly?</p>`,
-  choices: ['Yes, I heard it', 'No, I could not hear'],
-  data: {phase: 'soundcheck'},
-  on_finish: d => d.sound_pass = (d.response === 0)
-});
-
-// Branch: reject if sound failed
-timeline.push({
-  timeline: [{
-    type: htmlButtonResponse,
-    stimulus: `<h2>Audio Issue</h2><p>It looks like the sound wasn't audible. Please adjust your device audio and try again.</p>`,
-    choices: ['End study'],
-    data: {excluded: 'audio-fail'}
-  }],
-  conditional_function: () => jsPsych.data.get().last(1).values()[0].sound_pass !== true
-});
-
-// Stop timeline if excluded from audio
-timeline.push({
-  conditional_function: () => jsPsych.data.get().last(2).values()[0]?.data?.excluded === 'audio-fail',
-  timeline: [{ type: htmlButtonResponse, stimulus: '', choices: ['Close'] }]
-});
-
-// Consent
-timeline.push({
-  type: surveyHtmlForm,
-  preamble: CONSENT_HTML,
-  html: `
-    <label><input type="radio" name="consent" value="agree" required> I agree to participate</label><br/>
-    <label><input type="radio" name="consent" value="decline"> I do not agree</label>
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <div style="max-width:800px;margin:60px auto;text-align:center">
+      <h1>Story Task — Condition ${CONDITION}</h1>
+      <p>This will present each image with its audio, in the order listed in the CSV.</p>
+      <p>The page will automatically advance when each audio clip finishes.</p>
+    </div>
   `,
-  button_label: 'Continue',
-  data: {phase: 'consent'},
-  on_finish: d => d.consent_ok = (d.response.consent === 'agree')
+  choices: ['Start'],
+  data: { event: 'intro', condition: CONDITION }
 });
 
-// Branch: reject if no consent
-timeline.push({
-  timeline: [{
-    type: htmlButtonResponse,
-    stimulus: `<h2>Consent Not Given</h2><p>You must consent to participate. Thank you for your time.</p>`,
-    choices: ['End study'],
-    data: {excluded: 'no-consent'}
-  }],
-  conditional_function: () => jsPsych.data.get().last(1).values()[0].consent_ok !== true
-});
+// Load CSV and construct trials in the listed order
+d3.csv(CSV_PATH).then((rows) => {
+  if (!rows || rows.length === 0) throw new Error(`CSV empty or not found: ${CSV_PATH}`);
 
-// Demographics + eligibility
-timeline.push({
-  type: surveyHtmlForm,
-  preamble: `<h2>About You</h2>`,
-  html: `
-    <p><label>Age: <input type="number" min="18" max="99" name="age" required></label></p>
-    <p>
-      <label>Do you have normal hearing?<br/>
-        <select name="hearing" required>
-          <option value="">-- choose --</option>
-          <option>Yes</option>
-          <option>No</option>
-        </select>
-      </label>
-    </p>
-    <p>
-      <label>Are you fluent in English?<br/>
-        <select name="english" required>
-          <option value="">-- choose --</option>
-          <option>Yes</option>
-          <option>No</option>
-        </select>
-      </label>
-    </p>
-  `,
-  button_label: 'Continue',
-  data: {phase: 'demographics'},
-  on_finish: d => {
-    const r = d.response;
-    d.eligible = (+r.age >= 18) && (r.hearing === 'Yes') && (r.english === 'Yes');
-    jsPsych.data.addProperties({
-      age: +r.age, hearing: r.hearing, english: r.english, eligible: d.eligible
-    });
+  // Only keep storyScreens rows
+  const storyRows = rows.filter(r => trim(r[COL_DISPLAY]) === 'storyScreens');
+  if (storyRows.length === 0) {
+    throw new Error(`No rows with display == "storyScreens" in ${CSV_PATH}`);
   }
-});
 
-// Branch: reject if ineligible
-timeline.push({
-  timeline: [{
-    type: htmlButtonResponse,
-    stimulus: `<h2>Not Eligible</h2><p>Thanks for your interest. Based on your answers you’re not eligible for this study.</p>`,
-    choices: ['End study'],
-    data: {excluded: 'ineligible'}
-  }],
-  conditional_function: () => jsPsych.data.get().last(1).values()[0].eligible !== true
-});
+  // Preload lists
+  const preloadImages = [];
+  const preloadAudio  = [];
+  const trials = [];
 
-// Randomiser announcement (A / B / C)
-timeline.push({
-  type: htmlButtonResponse,
-  stimulus: () => `<h2>Story Assignment</h2><p>You have been assigned to <strong>Story ${assigned_version}</strong>.</p>`,
-  choices: ['Begin']
-});
+  storyRows.forEach((r, i) => {
+    const pic   = trim(r[COL_PIC]);
+    const audio = trim(r[COL_AUDIO]);
+    if (!pic || !audio) return; // skip incomplete rows
 
-// -------------------------------
-// Story exposure (passive listening)
-// -------------------------------
+    const imgPath = IMG_DIR + pic;     // e.g., "stimuli/images/Picture scenes 2/Scene1.JPG"
+    const audPath = AUD_DIR + audio;   // e.g., "stimuli/audio/story_audio/CA_P1.mp3"
 
-// We’ll load the correct story CSV and build the block at runtime
-async function makeStoryBlock(version) {
-  const rows = await loadCSV(`stimuli/story_${version}.csv`);
-  // optional image column is ignored in this “no orthography” build
-  const tv = rows.map(r => ({
-    audio: `stimuli/audio/story_audio${r.audio}`,
-    caption: r.caption || '' // optional debug/prompt text
-  }));
+    preloadImages.push(imgPath);
+    preloadAudio.push(audPath);
 
-  return {
-    timeline: [{
-      type: audioKeyboardResponse,
-      stimulus: jsPsych.timelineVariable('audio'),
+    trials.push({
+      type: jsPsychAudioKeyboardResponse,
+      stimulus: audPath,
       choices: "NO_KEYS",
-      trial_ends_after_audio: true,
-      prompt: () => '',  // keep screen clean (no text)
-      data: () => ({phase: 'exposure', story_version: version})
-    }],
-    timeline_variables: tv
-  };
-}
-
-// -------------------------------
-// Attention check (simple confirmation)
-// -------------------------------
-const attentionCheck = {
-  type: htmlButtonResponse,
-  stimulus: `<p>Attention check: to confirm you followed instructions, please press <strong>"Yes"</strong>.</p>`,
-  choices: ['Yes', 'No'],
-  data: {phase: 'attention'},
-  on_finish: d => d.attention_pass = (d.response === 0)
-};
-
-// Attention failure → reject
-const attentionReject = {
-  timeline: [{
-    type: htmlButtonResponse,
-    stimulus: `<h2>End of Study</h2><p>Thanks for your time. Unfortunately you did not meet the attention check requirement.</p>`,
-    choices: ['Finish'],
-    data: {excluded: 'attention-fail'}
-  }],
-  conditional_function: () => jsPsych.data.get().last(1).values()[0].attention_pass !== true
-};
-
-// -------------------------------
-// Preload everything (faster starts)
-// -------------------------------
-
-(async function boot() {
-  // Load story rows to know what to preload
-  const rows = await loadCSV(`stimuli/story_${assigned_version}.csv`);
-  const toPreload = audioList(rows).concat(['stimuli/audio/check_tone.wav']);
-
-  timeline.unshift({
-    type: preload,
-    audio: toPreload,
-    message: 'Loading audio…'
+      trial_ends_after_audio: true, // auto-proceed when audio ends
+      prompt: `
+        <div style="text-align:center; padding:24px;">
+          <img src="${imgPath}" alt="${pic}" style="max-width:80vmin;height:auto;display:block;margin:0 auto;" />
+        </div>
+      `,
+      on_start: () => {
+        // per-trial console log
+        console.log(
+          `[${new Date().toISOString()}] TRIAL ${i + 1} — image: ${pic} | audio: ${audio}`
+        );
+      },
+      data: {
+        event: 'story_trial',
+        condition: CONDITION,
+        csv_index: i + 1,
+        csv_picture: pic,
+        csv_audio: audio
+      }
+    });
   });
 
-  // Story block
-  const storyBlock = await makeStoryBlock(assigned_version);
-  timeline.push(storyBlock);
-
-  // Attention
-  timeline.push(attentionCheck, attentionReject);
-
-  // End screen if passed
+  // Preload all media
   timeline.push({
-    timeline: [{
-      type: htmlButtonResponse,
-      stimulus: `<h2>All done!</h2><p>Thank you for participating.</p>`,
-      choices: ['Download data & finish'],
-      data: {phase: 'debrief'}
-    }],
-    conditional_function: () => jsPsych.data.get().last(2).values()[0]?.data?.excluded !== 'attention-fail'
+    type: jsPsychPreload,
+    images: preloadImages,
+    audio: preloadAudio,
+    message: `<div style="text-align:center;padding:24px">Loading media…</div>`,
+    data: { event: 'preload', condition: CONDITION }
   });
+
+  // Push trials (in order; no randomization)
+  timeline.push(...trials);
+
+  // Outro — write the summary row right before showing the final button
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div style="text-align:center; padding:40px;">
+        <h2>All done ✅</h2>
+        <p>Click <b>Show data</b> to preview the recorded log.</p>
+      </div>
+    `,
+    choices: ['Show data'],
+    data: { event: 'outro', condition: CONDITION },
+    on_start: () => {
+      const ended = performance.now();
+      const duration = ended - exp_started_at_ms;
+
+      // console: duration at end
+      console.log(
+        `[${new Date().toISOString()}] END — duration_ms: ${Math.round(duration)}`
+      );
+
+      // append a summary row while a trial is active (safe to write here)
+      jsPsych.data.write({
+        event: 'experiment_summary',
+        condition: CONDITION,
+        started_at_ms: exp_started_at_ms,
+        ended_at_ms: ended,
+        duration_ms: duration,
+        total_trials: jsPsych.data.get().count()
+      });
+    }
+  });
+
+  // ---- START LOGGING + RUN ----
+  console.log(`[${new Date().toISOString()}] START — condition: ${CONDITION}`);
+  attachMonitors();
+  isRunning = true;
 
   jsPsych.run(timeline);
-})();
+
+}).catch((err) => {
+  console.error(err);
+  document.body.innerHTML = `
+    <div style="max-width:800px;margin:80px auto;color:#b00020">
+      <h2>The experiment failed to load.</h2>
+      <p>${String(err)}</p>
+      <p>Checked path: <code>${CSV_PATH}</code></p>
+    </div>
+  `;
+});
