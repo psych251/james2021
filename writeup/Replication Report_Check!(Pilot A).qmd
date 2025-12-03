@@ -1,0 +1,160 @@
+---
+title: "Pilot (A)_Replication of Study 2 by James et al. (2021, JEP:LMC)"
+author: "Madison Paron (mparon@stanford.edu)"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+format: 
+  html:
+    toc: true
+    toc_depth: 3
+---
+
+<!-- Replication reports should all use this template to standardize reporting across projects.  These reports will be public supplementary materials that accompany the summary report(s) of the aggregate results. -->
+
+**Project Repo:** [https://github.com/psych251/james2021.git](https://github.com/psych251/james2021.git)
+
+**Original Paper:** [https://github.com/psych251/james2021/blob/f321f4e5839f4ffe743184268abcec2df0c944cf/original_paper/james21.pdf](https://github.com/psych251/james2021/blob/f321f4e5839f4ffe743184268abcec2df0c944cf/original_paper/james21.pdf)
+
+
+## Introduction
+
+### Justification for Choice of Experiment
+
+I chose this experiment because it examines how prior lexical knowledge influences vocabulary acquisition under incidental learning conditions, which aligns closely with my research interests in language learning and memory integration. Most models of word learning emphasize explicit instruction, yet the majority of real-world vocabulary acquisition occurs incidentally through narrative and social contexts. I am particularly interested in how prior knowledge interacts with consolidation processes to shape long-term lexical representations—a question that sits at the intersection of language acquisition and memory systems research. Replicating this experiment offers an opportunity to examine whether the memory and language mechanisms observed in controlled learning settings extend to more naturalistic, story-based contexts that mirror how vocabulary is acquired in everyday life.
+
+
+### Description of Stimuli, Procedures, and Anticipated Challenges
+
+The experiment presents 15 bisyllabic pseudowords embedded within an illustrated, spoken story (“*Trouble at the Intergalactic Zoo*”). Each pseudoword belongs to one of three phonological neighborhood conditions:  
+- **No neighbors** (e.g., *femod*)  
+- **One neighbor** (e.g., *tabric* ↔ *fabric*)  
+- **Many neighbors** (e.g., *dester* ↔ *duster*, *pester*)  
+
+Each pseudoword appears five times across the narrative. The story is paired with 15 corresponding cartoon scenes, each containing multiple pseudoword referents to maintain narrative coherence while preventing explicit word–object pairing. This design ensures *incidental exposure* rather than deliberate memorization.
+
+Participants listen to the 7-minute story while viewing illustrations, then complete three types of memory tests:
+
+1. **Stem completion** – recall of word-forms from initial CV cues  
+2. **Form recognition** – distinguishing target pseudowords from minimal phonological foils  
+3. **Form–picture recognition** – mapping pseudowords to their illustrated referents  
+
+Each test is administered **immediately after learning**, **the next day**, and **one week later** to assess consolidation effects.
+
+### Challenges in Replication
+
+- **Stimulus control:** Ensuring balanced pseudoword properties (phoneme/letter length, bigram probability, neighborhood frequency) and matching the auditory timing of exposures. (Would like to figure out how to check this)
+- **Incidental exposure fidelity:** Participants must attend to the story without adopting explicit memorization strategies, especially in adult online samples.  
+- **Retention and engagement:** Maintaining consistent participation across multiple testing sessions, particularly for the delayed tests.  
+
+
+
+## Methods
+
+### Power Analysis
+
+Original effect size, power analysis for samples to achieve 80%, 90%, 95% power to detect that effect size.  Considerations of feasibility for selecting planned sample size.
+
+### Planned Sample
+
+- 60 adults
+- Age 18-35 years old
+- Native monolingual English speakers residing in the US (will most likely change this to US English speakers residing in the US)
+- No reported visual, hearing, or literacy difficulties
+- Had not participated in experiment S1 (not running S1, so not a problem)
+- Have working microphone that was compatible with the experiment platform
+- Prolific participants that had participated in at least ten studies with minimum 95% approval rate
+- Must not self-report inappropriate strategy (i.e., writing the words down)
+- Must complete vocabulary test properly
+
+
+### Materials
+
+This includes audio and images. I have gathered these materials from the posted materials on OSF. 
+
+### Procedure	
+
+
+**Three Testing Days:**
+
+- **Session 1 / Day 1:** ~20 minutes  
+- **Session 2 / Day 2:** ~5 minutes  
+- ***No session 3 for retention and financing constraints***
+
+
+
+### Analysis Plan
+
+Analyses will be conducted in R, using lme4 to fit mixed effects models
+and ggplot2  for figures. A mixed effects binomial regression model will be used
+to analyze each of the dependent variables, with fixed effects of
+session, neighborhood condition, vocabulary ability, and all corre-
+sponding interactions. Orthogonal contrasts will be used for each of
+the factorial predictors. For the fixed effect of session, delay1 con-
+trasted responses before and after opportunities for offline consoli-
+dation (T1 vs. T2). For the fixed effect of neighbors, neighb1 contrasted
+words without versus with neighbors (no vs. one & many), and
+neighb2 contrasted words with one versus many neighbors. I will attempt to
+figure out how the authors used raw vocabulary scores for analyses,
+which were scaled and centered before entering into the model.
+For each analysis, I will computed a random-intercepts model
+with all fixed effects and interactions. If there was no indication of
+a three-way interaction in the model (all ps > .2), these will be
+pruned to enable a more parsimonious model with better-specified
+random effects. I will then incorporate random slopes into the
+model using a forward best-path approach (Barr et al., 2013), pro-
+gressively adding slopes into the model and retaining only those
+random effects justified by the data under a liberal alpha-criterion
+(p < .2).
+
+**Clarify key analysis of interest here**  You can also pre-specify additional analyses you plan to do.
+
+### Differences from Original Study
+
+Explicitly describe known differences in sample, setting, procedure, and analysis plan from original study.  The goal, of course, is to minimize those differences, but differences will inevitably occur.  Also, note whether such differences are anticipated to make a difference based on claims in the original article or subsequent published research on the conditions for obtaining the effect.
+
+I will only focus on experiment 2 that focuses on adults (18-35 years of age). I had trouble with a microphone check in my jspsych script, so I decided to push
+forward using Gorilla (the platform originally used by the authors) and thought it would honestly be a great way to test exactly what their proceedures were. My
+participants will be from the US rather from the UK.
+
+### Methods Addendum (Post Data Collection)
+
+You can comment this section out prior to final report with data collection.
+
+#### Actual Sample
+  Sample size, demographics, data exclusions based on rules spelled out in analysis plan
+
+#### Differences from pre-data collection methods plan
+  Any differences from what was described as the original plan, or “none”.
+
+
+## Results
+
+
+### Data preparation
+
+Data preparation following the analysis plan.
+	
+
+The drafted analysis script can be found here: 
+
+The current pilot data can be found here: 
+```
+
+### Confirmatory analysis
+
+The analyses as specified in the analysis plan.  
+
+*Side-by-side graph with original graph is ideal here*
+
+### Exploratory analyses
+
+Any follow-up analyses desired (not required).  
+
+## Discussion
+
+### Summary of Replication Attempt
+
+Open the discussion section with a paragraph summarizing the primary result from the confirmatory analysis and the assessment of whether it replicated, partially replicated, or failed to replicate the original result.  
+
+### Commentary
+
+Add open-ended commentary (if any) reflecting (a) insights from follow-up exploratory analysis, (b) assessment of the meaning of the replication (or not) - e.g., for a failure to replicate, are the differences between original and present study ones that definitely, plausibly, or are unlikely to have been moderators of the result, and (c) discussion of any objections or challenges raised by the current and original authors about the replication attempt.  None of these need to be long.
