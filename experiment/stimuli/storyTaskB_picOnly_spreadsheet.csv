@@ -1,0 +1,23 @@
+﻿display,picture,audio,compQ,compQans,compQleft,compQright,,,randomise_blocks,randomise_trials
+instructions,,,,,,,,,,
+storyTitle,Title.JPG,,,,,,,,,
+storyScreens,Scene1.JPG,CB_P1.mp3,,,,,,,,
+storyScreens,Scene2.JPG,CB_P2.mp3,,,,,,,,
+storyScreens,Scene3.JPG,CB_P3.mp3,,,,,,,,
+storyScreens,Scene4.JPG,CB_P4.mp3,,,,,,,,
+storyScreens,Scene5.JPG,CB_P5.mp3,,,,,,,,
+storyScreens,Scene6.JPG,CB_P6.mp3,,,,,,,,
+storyScreens,Scene7.JPG,CB_P7.mp3,,,,,,,,
+storyScreens,Scene8.JPG,CB_P8.mp3,,,,,,,,
+storyScreens,Scene9.JPG,CB_P9.mp3,,,,,,,,
+storyScreens,Scene10.JPG,CB_P10.mp3,,,,,,,,
+storyScreens,Scene11.JPG,CB_P11.mp3,,,,,,,,
+storyScreens,Scene12.JPG,CB_P12.mp3,,,,,,,,
+storyScreens,Scene13.JPG,CB_P13.mp3,,,,,,,,
+storyScreens,Scene14.JPG,CB_P14.mp3,,,,,,,,
+storyScreens,Scene15.JPG,CB_P15.mp3,,,,,,,,
+comprehensionInstructions,,,,,,,,,,
+comprehensionQs,,,What was the boy character called?,Archie,Andy,Archie,,,,1
+comprehensionQs,,,What was the girl character called?,Krista,Krista,Crystal,,,,1
+comprehensionQs,,,What colour were the main characters?,Green,Green,Yellow,,,,1
+comprehensionQs,,,Where did they go?,Intergalactic Zoo,Intergalactic Fairground,Intergalactic Zoo,,,,1
