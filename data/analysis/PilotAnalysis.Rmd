@@ -5,40 +5,54 @@ library(ggpirate)
 ```
 
 ```{r}
-recog <- read.csv("storyAdults_recognition.csv") %>%
-  filter(valid == 1)
+FR <- read.csv("/Users/madisonparon/Documents/GitHub/james2021/data/pilot/PilotB_cleandata/PilotB_recognition_combined_day1_day2.csv", header=TRUE)
 ```
 
-```{r}
-vocab <- read.csv("storyAdults_background.csv") %>%
-  select(ID, vocabRaw)
-
-recog <- merge(recog, vocab, by = "ID")
-```
 Descriptive statistics
 ```{r}
-# Relevel neighbour factor so that it prints in a logical order
-recog$neighb <- fct_relevel(recog$neighb, c("none", "one", "many"))
+FR$neighb <- fct_relevel(FR$neighb, c("none", "one", "many")) # order for intuitive printing of means 
 
-# Summarise per condition
-recog %>%
+FR %>%
   group_by(session) %>%
   summarise(mean = mean(acc), sd = sd(acc))
+
 ```
 ```{r}
-recog %>%
+FR %>%
   group_by(neighb) %>%
   summarise(mean = mean(acc), sd = sd(acc))
 ```
 
 ```{r}
-recog %>%
+FR %>%
   group_by(session, neighb) %>%
   summarise(mean = mean(acc), sd = sd(acc))
 ```
 
+Preparation for analysis
+
+Word Neighbors
 ```{r}
-pptMeans <- recog %>%
+neighb.contrasts <- cbind(c(-2, 1, 1), c(0,-1,1))
+contrasts(FR$neighb) <- neighb.contrasts
+contrasts(FR$neighb)
+```
+Test Session
+```{r}
+FR$session <- as.factor(FR$session)
+session.contrasts <- cbind(c(-2, 1, 1), c(0,-1,1))
+contrasts(FR$session) <- session.contrasts
+contrasts(FR$session)
+```
+Vocabulary ability
+```{r}
+recog$vocabS <- scale(recog$vocabRaw, center = TRUE, scale = TRUE) 
+```
+
+Is performance at above chance levels?
+```{r}
+# Compute participant means for the first session
+pptMeans <- FR %>%
   select(ID, session, acc) %>%
   filter(session == 1) %>%
   group_by(ID) %>%
@@ -46,56 +60,16 @@ pptMeans <- recog %>%
 ```
 
 ```{r}
-t.test(pptMeans$mean, mu=.25, alternative = "greater")
-
+# Perform one-sample t-test against chance performance (.5)
+t.test(pptMeans$mean, mu=.5, alternative = "greater")
 ```
-Preparation for analysis
-
-Word Neighbors
-```{r}
-neighb.contrasts <- cbind(c(-2, 1, 1), c(0,-1,1))
-contrasts(recog$neighb) <- neighb.contrasts
-contrasts(recog$neighb)
-```
-Test Session
-```{r}
-recog$session <- as.factor(recog$session)
-session.contrasts <- cbind(c(-2, 1, 1), c(0,-1,1))
-contrasts(recog$session) <- session.contrasts
-contrasts(recog$session)
-```
-Vocabulary ability
-```{r}
-recog$vocabS <- scale(recog$vocabRaw, center = TRUE, scale = TRUE) 
-```
-
 Model building
 Pruning of fixed effects
 ```{r}
-fix.full <- glmer(acc ~ session*neighb*vocabS + (1|ID) + (1|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
-#summary(fix.full) 
-```
-
-```{r}
-fix.pars <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1|ID) + (1|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
-anova(fix.pars, fix.full)
-```
-Build random effects structure
-```{r}
-# Model without random effects for participants
-mod.items <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
-anova(mod.items, fix.pars) 
-
-```
-```{r}
-
-# Model without random effects for items
-mod.ppts <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1|ID), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
-anova(mod.ppts, fix.pars)
+# Full model with interaction of session and neighb only
+fix.full <- glmer(acc ~ session*neighb + (1|ID) + (1|item),
+                  data = FR, family = binomial,
+                  control = glmerControl(optimizer = "bobyqa"))
 ```
 By-participant random slopes
 ```{r}

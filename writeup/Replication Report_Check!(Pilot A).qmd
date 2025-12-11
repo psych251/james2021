@@ -1,7 +1,7 @@
 ---
 title: "Pilot (A)_Replication of Study 2 by James et al. (2021, JEP:LMC)"
 author: "Madison Paron (mparon@stanford.edu)"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+date: "December 3, 2025"
 format: 
   html:
     toc: true
@@ -37,7 +37,7 @@ Participants listen to the 7-minute story while viewing illustrations, then comp
 2. **Form recognition** – distinguishing target pseudowords from minimal phonological foils  
 3. **Form–picture recognition** – mapping pseudowords to their illustrated referents  
 
-Each test is administered **immediately after learning**, **the next day**, and **one week later** to assess consolidation effects.
+Each test is administered **immediately after learning** and **the next day** to assess consolidation effects.
 
 ### Challenges in Replication
 
@@ -88,9 +88,7 @@ and ggplot2  for figures. A mixed effects binomial regression model will be used
 to analyze each of the dependent variables, with fixed effects of
 session, neighborhood condition, vocabulary ability, and all corre-
 sponding interactions. Orthogonal contrasts will be used for each of
-the factorial predictors. For the fixed effect of session, delay1 con-
-trasted responses before and after opportunities for offline consoli-
-dation (T1 vs. T2). For the fixed effect of neighbors, neighb1 contrasted
+the factorial predictors. For the fixed effect of session, delay1 contrasted responses before and after opportunities for offline consolidation (T1 vs. T2). For the fixed effect of neighbors, neighb1 contrasted
 words without versus with neighbors (no vs. one & many), and
 neighb2 contrasted words with one versus many neighbors. I will attempt to
 figure out how the authors used raw vocabulary scores for analyses,
@@ -100,8 +98,7 @@ with all fixed effects and interactions. If there was no indication of
 a three-way interaction in the model (all ps > .2), these will be
 pruned to enable a more parsimonious model with better-specified
 random effects. I will then incorporate random slopes into the
-model using a forward best-path approach (Barr et al., 2013), pro-
-gressively adding slopes into the model and retaining only those
+model using a forward best-path approach (Barr et al., 2013), progressively adding slopes into the model and retaining only those
 random effects justified by the data under a liberal alpha-criterion
 (p < .2).
 
@@ -112,7 +109,7 @@ random effects justified by the data under a liberal alpha-criterion
 Explicitly describe known differences in sample, setting, procedure, and analysis plan from original study.  The goal, of course, is to minimize those differences, but differences will inevitably occur.  Also, note whether such differences are anticipated to make a difference based on claims in the original article or subsequent published research on the conditions for obtaining the effect.
 
 I will only focus on experiment 2 that focuses on adults (18-35 years of age). I had trouble with a microphone check in my jspsych script, so I decided to push
-forward using Gorilla (the platform originally used by the authors) and thought it would honestly be a great way to test exactly what their proceedures were. My
+forward using Gorilla (the platform originally used by the authors) and thought it would honestly be a great way to test exactly what their procedures were. My
 participants will be from the US rather from the UK.
 
 ### Methods Addendum (Post Data Collection)
@@ -132,11 +129,13 @@ You can comment this section out prior to final report with data collection.
 ### Data preparation
 
 Data preparation following the analysis plan.
-	
 
-The drafted analysis script can be found here: 
+The current pilot data can be found [here.](https://github.com/psych251/james2021/tree/a7dc42d9960bb540ee41f26b300616c049648800/data/pilot)
 
-The current pilot data can be found here: 
+The drafted analysis script can be found [here.](https://github.com/psych251/james2021/blob/a7dc42d9960bb540ee41f26b300616c049648800/data/analysis/PilotAnalysis.Rmd)
+
+
+
 ```
 
 ### Confirmatory analysis

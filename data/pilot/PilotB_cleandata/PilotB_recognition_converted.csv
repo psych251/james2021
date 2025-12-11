@@ -1,0 +1,16 @@
+Unnamed: 0,ID,session,item,picture,CBC,neighb,selected,acc,picAcc,formAcc,valid
+1,14710098,1,tabric,zookeeper,C,one,peflin,0,0,0,1
+2,14710098,1,rafar,animal,C,one,rafar,1,1,1,1
+3,14710098,1,mowel,coat,C,many,mowel,1,1,1,1
+4,14710098,1,peflin,drink,C,none,peflin,1,1,1,1
+5,14710098,1,pungus,dragon,C,one,pungus,1,1,1,1
+6,14710098,1,nusty,food,C,many,nusty,1,1,1,1
+7,14710098,1,wabon,backpack,C,one,wabon,1,1,1,1
+8,14710098,1,tesdar,ride,C,none,tesdar,1,1,1,1
+9,14710098,1,ballow,money,C,many,parung,0,0,0,1
+10,14710098,1,regby,car,C,one,tesdar,0,0,0,1
+11,14710098,1,vorgal,flower,C,none,femod,0,0,0,1
+12,14710098,1,femod,hoverboard,C,none,femod,1,1,1,1
+13,14710098,1,dester,tree,C,many,dester,1,1,1,1
+14,14710098,1,solly,monster,C,many,solly,1,1,1,1
+15,14710098,1,parung,sun,C,none,vorgal,0,0,0,1
