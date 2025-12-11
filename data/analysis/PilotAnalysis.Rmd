@@ -2,6 +2,10 @@
 library(tidyverse)
 library(lme4)
 library(ggpirate)
+library(ggplot2)
+library(ggpirate)
+library(dplyr)
+
 ```
 
 ```{r}
@@ -71,86 +75,123 @@ fix.full <- glmer(acc ~ session*neighb + (1|ID) + (1|item),
                   data = FR, family = binomial,
                   control = glmerControl(optimizer = "bobyqa"))
 ```
-By-participant random slopes
 ```{r}
-# Model with by-participant slopes for the effect of test session
-mod1 <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1+session|ID) + (1|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+fix.pars <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1|ID) + (1|item), 
+                  data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+anova(fix.pars, fix.full)
+```
+
+Build random effects structure
+```{r}
+# Model without random effects for participants
+mod.items <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1|item), 
+                   data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa")) 
+anova(mod.items, fix.pars) 
 
 ```
+
+
+```{r}
+# Model without random effects for items
+mod.ppts <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1|ID), 
+                  data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+anova(mod.ppts, fix.pars)
+```
+
+By-participant random slopes
+
+```{r}
+# Model with by-participant slopes for the effect of session
+mod1 <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+session|ID) + (1|item), 
+              data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+```
+
 ```{r}
 anova(fix.pars, mod1)
 ```
 
 ```{r}
 # Model with by-participant slopes for the effect of neighbour condition
-mod2 <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1+neighb|ID) + (1|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+mod2 <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+neighb|ID) + (1|item), 
+              data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
 anova(fix.pars, mod2)
 ```
-Only random slopes for neighbour condition improved model fit. Check that test session does not contribute beyond this.
 
 ```{r}
 # Model with by-participant slopes for the effects of neighbour condition and test session
-mod2a <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1+neighb+session|ID) + (1|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+mod2a <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+neighb+session|ID) + (1|item), 
+               data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
 ```
 
 ```{r}
 anova(mod2, mod2a)
 ```
+
 By-item random slopes
 ```{r}
-# Model with by-item slopes for the effect of test session
-mod3 <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1+neighb|ID) + (1+session|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+# Model with by-item slopes for the effects of test session
+mod3 <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+neighb|ID) + (1+session|item), 
+               data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
 ```
 
+
 ```{r}
-anova(mod2, mod3)
-```
-```{r}
-# Model with by-item slopes for the effect of vocabulary
-mod4 <- glmer(acc ~ session*neighb + session*vocabS + neighb*vocabS + (1+neighb|ID) + (1+vocabS|item), 
-                  data = recog, family = binomial, control = glmerControl(optimizer = "bobyqa"))
-anova(mod2, mod4)
+anova(mod2, mod4) 
 ```
 
 Final model
+The final model we arrived at is as follows:
 ```{r}
 summary(mod2)
 ```
+
 Plot Graphs
-Create participant means
+
 ```{r}
-cond.means <- recog %>%
+##Compute participant condition means
+cond.means <- FR %>%
   group_by(ID, session, neighb) %>%
-  summarise(meanAcc = mean(acc))
+  summarise(mean = mean(acc, na.rm = TRUE))
+
+cond.means$session <- as.factor(cond.means$session)
 ```
 
-Recognition for words of different word neighbour conditions at each time point
 ```{r}
-recogGraph <- ggplot(data = cond.means, aes(x=session, y=meanAcc)) +
-  theme_bw() + 
-  geom_pirate(aes(colour=neighb, fill = neighb), show.legend = TRUE, 
-              points_params = list(alpha = 1, size = 3), 
-              lines_params = list(size=0.9)) + 
+formGraph <- ggplot(data = cond.means, aes(x = session, y = mean)) +
+  theme_bw() +
+  geom_pirate(aes(colour = neighb, fill = neighb),
+              show.legend   = TRUE,
+              points_params = list(alpha = 1, size = 3),
+              lines_params  = list(size = 0.9)) +
   scale_color_discrete(name = "Word-form neighbours:") +
-  scale_fill_discrete(name = "Word-form neighbours:") + 
-  scale_x_discrete(name = "Test session", breaks = c(1, 2, 3), labels = c("Same day", "Next day", "Week later")) + 
-  scale_y_continuous(name = "Percent correct", labels = scales::percent) + 
-  theme(legend.position = "top",
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 14),
-        legend.box.background = element_rect(colour = "black"),
-        strip.text = element_text(size = 20),
-        axis.title = element_text(size = 18),
-        axis.text = element_text(size = 14)) + 
-  geom_hline(yintercept = 0.25, linetype = "dashed") #line to mark chance-level performance
+  scale_fill_discrete(name = "Word-form neighbours:") +
+  scale_x_discrete(
+    name   = "Test session",
+    breaks = c("1", "2"),           # use c("1","2","3") if you have 3 sessions
+    labels = c("Same day", "Next day")
+    # labels = c("Same day","Next day","Week later") for 3 sessions
+  ) +
+  scale_y_continuous(name = "Proportion correct") +
+  theme(
+    legend.position       = "top",
+    legend.title          = element_text(size = 14),
+    legend.text           = element_text(size = 14),
+    legend.box.background = element_rect(colour = "black"),
+    strip.text            = element_text(size = 20),
+    axis.title            = element_text(size = 18),
+    axis.text             = element_text(size = 14)
+  ) +
+  geom_hline(yintercept = 0.50, linetype = "dashed")
+
+print(formGraph)
+
 ```
 ```{r}
-print(recogGraph)
+# Save as a ggplot object
+saveRDS(formGraph, file = "formGraph.rds")
 ```
+
+
 R Version information
 ```{r}
 sessionInfo()
