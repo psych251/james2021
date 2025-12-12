@@ -102,15 +102,15 @@ model using a forward best-path approach (Barr et al., 2013), progressively addi
 random effects justified by the data under a liberal alpha-criterion
 (p < .2).
 
-**Clarify key analysis of interest here**  You can also pre-specify additional analyses you plan to do.
+**Clarify key analysis of interest here**  
+I am specifically interested in the form recognitiion analysis (the test where the participant has to list to two words, one word that was present in the study and a foil word, and then make a determination of which word they think they heard in the study). I think it will be interesting to see how these results differ after the day delay.
+
 
 ### Differences from Original Study
 
-Explicitly describe known differences in sample, setting, procedure, and analysis plan from original study.  The goal, of course, is to minimize those differences, but differences will inevitably occur.  Also, note whether such differences are anticipated to make a difference based on claims in the original article or subsequent published research on the conditions for obtaining the effect.
-
 I will only focus on experiment 2 that focuses on adults (18-35 years of age). I had trouble with a microphone check in my jspsych script, so I decided to push
 forward using Gorilla (the platform originally used by the authors) and thought it would honestly be a great way to test exactly what their procedures were. My
-participants will be from the US rather from the UK.
+participants will be from the US rather from the UK. I also implemented an additional exclusion criteria that Prolific offered to return submissions of participants that completed the task unrealistically fast (although I am not sure how the software made this determination).
 
 ### Methods Addendum (Post Data Collection)
 
@@ -144,13 +144,324 @@ The drafted analysis script can be found [here.](https://github.com/psych251/jam
 
 
 
-```
+
 
 ### Confirmatory analysis
 
-The analyses as specified in the analysis plan.  
+#### Preprocessing scripts
+This takes the files from the survey tool and converts them into files that are easier to process.
 
-*Side-by-side graph with original graph is ideal here*
+```{r}
+library(tidyverse)
+
+## ------------------------------------------------------------
+## 0. Paths
+## ------------------------------------------------------------
+
+base_dir <- "/Users/madisonparon/Documents/GitHub/james2021/data/pilot/PilotB_rawdata"
+out_path <- "/Users/madisonparon/Documents/GitHub/james2021/data/pilot/PilotB_cleandata/PilotB_recognition_combined_day1_day2.csv"
+
+day1_file <- file.path(base_dir, "data_exp_250842-v10_task-1ie9-14710098.csv")
+day2_file <- file.path(base_dir, "data_exp_250842-v10_task-2sj4-14710098.csv")
+
+## ------------------------------------------------------------
+## 1. Hard-code item → CBC / neighb (from your adult dataset)
+##    Using CBC = "C" for this pilot (single condition)
+## ------------------------------------------------------------
+
+item_info <- tribble(
+  ~item,    ~CBC, ~neighb,
+  "peflin", "C",  "none",
+  "regby",  "C",  "one",
+  "dester", "C",  "many",
+  "nusty",  "C",  "many",
+  "mowel",  "C",  "many",
+  "parung", "C",  "none",
+  "pungus", "C",  "one",
+  "rafar",  "C",  "one",
+  "solly",  "C",  "many",
+  "tabric", "C",  "one",
+  "tesdar", "C",  "none",
+  "vorgal", "C",  "none",
+  "wabon",  "C",  "one",
+  "ballow", "C",  "many",
+  "femod",  "C",  "none"
+)
+
+## ------------------------------------------------------------
+## 2. Function: convert one day's file → storyAdults2_formRecog-style
+## ------------------------------------------------------------
+
+convert_form_recog <- function(path, session_num) {
+  
+  raw <- read_csv(path, show_col_types = FALSE)
+  
+  resp_rows <- raw %>%
+    filter(
+      display == "recog-trial",
+      `Screen Name` == "response"
+    ) %>%
+    mutate(
+      # target pseudoword for this trial
+      item = ANSWER,
+      
+      # what participant actually chose (1 or 2)
+      selected = case_when(
+        is.na(Response) ~ NA_character_,
+        Response == correctResponse ~ ANSWER,   # chose the correct form
+        TRUE ~ foil                                  # chose the foil form
+      ),
+      
+      # accuracy as 0/1
+      acc = as.integer(!is.na(selected) & selected == item),
+      
+      # RT in ms (from Gorilla)
+      RT = `Reaction Time`,
+      
+      # participant ID (keep Gorilla public ID; can recode later if needed)
+      ID = `Participant Public ID`,
+      
+      # session number = task day (1 or 2)
+      session = session_num
+    ) %>%
+    left_join(item_info, by = "item")
+  
+  # Match column order of storyAdults2_formRecog: ID, CBC, item, acc, RT, session, neighb
+  out <- resp_rows %>%
+    transmute(
+      ID,
+      CBC,
+      item,
+      acc,
+      RT,
+      session,
+      neighb
+    )
+  
+  return(out)
+}
+
+## ------------------------------------------------------------
+## 3. Apply to Day 1 and Day 2 and combine
+## ------------------------------------------------------------
+
+day1_form <- convert_form_recog(day1_file, session_num = 1)
+day2_form <- convert_form_recog(day2_file, session_num = 2)
+
+combined_form <- bind_rows(day1_form, day2_form)
+
+## ------------------------------------------------------------
+## 4. Save combined file in storyAdults2_formRecog format
+## ------------------------------------------------------------
+
+write_csv(combined_form, out_path)
+
+
+```
+
+#### Initial analysis
+
+```{r}
+library(tidyverse)
+library(lme4)
+library(ggpirate)
+library(ggplot2)
+library(ggpirate)
+library(dplyr)
+
+```
+
+```{r}
+FR <- read.csv("/Users/madisonparon/Documents/GitHub/james2021/data/pilot/PilotB_cleandata/PilotB_recognition_combined_day1_day2.csv", header=TRUE)
+```
+
+Descriptive statistics
+```{r}
+FR$neighb <- fct_relevel(FR$neighb, c("none", "one", "many")) # order for intuitive printing of means 
+
+FR %>%
+  group_by(session) %>%
+  summarise(mean = mean(acc), sd = sd(acc))
+
+```
+```{r}
+FR %>%
+  group_by(neighb) %>%
+  summarise(mean = mean(acc), sd = sd(acc))
+```
+
+```{r}
+FR %>%
+  group_by(session, neighb) %>%
+  summarise(mean = mean(acc), sd = sd(acc))
+```
+
+Preparation for analysis
+
+Word Neighbors
+```{r}
+neighb.contrasts <- cbind(c(-2, 1, 1), c(0,-1,1))
+contrasts(FR$neighb) <- neighb.contrasts
+contrasts(FR$neighb)
+```
+Test Session
+```{r, eval=FALSE}
+FR$session <- as.factor(FR$session)
+session.contrasts <- cbind(c(-2, 1, 1), c(0,-1,1))
+contrasts(FR$session) <- session.contrasts
+contrasts(FR$session)
+```
+Vocabulary ability
+```{r, eval=FALSE}
+recog$vocabS <- scale(recog$vocabRaw, center = TRUE, scale = TRUE) 
+```
+
+Is performance at above chance levels?
+```{r, eval=FALSE}
+# Compute participant means for the first session
+pptMeans <- FR %>%
+  select(ID, session, acc) %>%
+  filter(session == 1) %>%
+  group_by(ID) %>%
+  summarise(mean = mean(acc, na.rm = TRUE))
+```
+
+```{r, eval=FALSE}
+# Perform one-sample t-test against chance performance (.5)
+t.test(pptMeans$mean, mu=.5, alternative = "greater")
+```
+Model building
+Pruning of fixed effects
+```{r, eval=FALSE}
+# Full model with interaction of session and neighb only
+fix.full <- glmer(acc ~ session*neighb + (1|ID) + (1|item),
+                  data = FR, family = binomial,
+                  control = glmerControl(optimizer = "bobyqa"))
+```
+
+```{r, eval=FALSE}
+fix.pars <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1|ID) + (1|item), 
+                  data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+anova(fix.pars, fix.full)
+```
+
+Build random effects structure
+```{r, eval=FALSE}
+# Model without random effects for participants
+mod.items <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1|item), 
+                   data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa")) 
+anova(mod.items, fix.pars) 
+
+```
+
+
+```{r, eval=FALSE}
+# Model without random effects for items
+mod.ppts <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1|ID), 
+                  data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+anova(mod.ppts, fix.pars)
+```
+
+By-participant random slopes
+
+```{r, eval=FALSE}
+# Model with by-participant slopes for the effect of session
+mod1 <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+session|ID) + (1|item), 
+              data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+```
+
+```{r, eval=FALSE}
+anova(fix.pars, mod1)
+```
+
+```{r, eval=FALSE}
+# Model with by-participant slopes for the effect of neighbour condition
+mod2 <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+neighb|ID) + (1|item), 
+              data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+anova(fix.pars, mod2)
+```
+
+```{r, eval=FALSE}
+# Model with by-participant slopes for the effects of neighbour condition and test session
+mod2a <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+neighb+session|ID) + (1|item), 
+               data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+```
+
+```{r, eval=FALSE}
+anova(mod2, mod2a)
+```
+
+By-item random slopes
+```{r, eval=FALSE}
+# Model with by-item slopes for the effects of test session
+mod3 <- glmer(acc ~ session*neighb + vocabS*neighb + session*vocabS + (1+neighb|ID) + (1+session|item), 
+               data = PR, family = binomial, control = glmerControl(optimizer = "bobyqa"))
+```
+
+
+```{r, eval=FALSE}
+anova(mod2, mod4) 
+```
+
+Final model
+The final model we arrived at is as follows:
+```{r, eval=FALSE}
+summary(mod2)
+```
+
+Plot Graphs
+
+```{r}
+##Compute participant condition means
+cond.means <- FR %>%
+  group_by(ID, session, neighb) %>%
+  summarise(mean = mean(acc, na.rm = TRUE))
+
+cond.means$session <- as.factor(cond.means$session)
+```
+
+```{r}
+formGraph <- ggplot(data = cond.means, aes(x = session, y = mean)) +
+  theme_bw() +
+  geom_pirate(aes(colour = neighb, fill = neighb),
+              show.legend   = TRUE,
+              points_params = list(alpha = 1, size = 3),
+              lines_params  = list(size = 0.9)) +
+  scale_color_discrete(name = "Word-form neighbours:") +
+  scale_fill_discrete(name = "Word-form neighbours:") +
+  scale_x_discrete(
+    name   = "Test session",
+    breaks = c("1", "2"),           # use c("1","2","3") if you have 3 sessions
+    labels = c("Same day", "Next day")
+    # labels = c("Same day","Next day","Week later") for 3 sessions
+  ) +
+  scale_y_continuous(name = "Proportion correct") +
+  theme(
+    legend.position       = "top",
+    legend.title          = element_text(size = 14),
+    legend.text           = element_text(size = 14),
+    legend.box.background = element_rect(colour = "black"),
+    strip.text            = element_text(size = 20),
+    axis.title            = element_text(size = 18),
+    axis.text             = element_text(size = 14)
+  ) +
+  geom_hline(yintercept = 0.50, linetype = "dashed")
+
+print(formGraph)
+
+```
+```{r}
+# Save as a ggplot object
+saveRDS(formGraph, file = "formGraph.rds")
+```
+
+
+R Version information
+```{r}
+sessionInfo()
+
+```
+
 
 ### Exploratory analyses
 
