@@ -137,9 +137,9 @@ In addition to following the methods outlined in the paper, I also sent a Prolif
 
 Data preparation following the analysis plan.
 
-The current pilot B raw data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_rawdata)
+The pilot B raw data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_rawdata)
 
-The current pilot B clean data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_cleandata)
+The pilot B clean data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_cleandata)
 
 The full raw data can be found [here.](https://github.com/psych251/james2021/tree/e77300292a2c0629b7eb58e65b88b2d1d95f428c/data/fulldata/raw)
 
