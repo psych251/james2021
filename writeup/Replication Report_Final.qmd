@@ -431,39 +431,38 @@ cond.means$session <- as.factor(cond.means$session)
 ```
 
 ```{r}
-formGraph <- ggplot(data = cond.means, aes(x = session, y = mean)) +
+formGraph <- ggplot(cond.means, aes(x = session, y = mean)) +
   theme_bw() +
-  geom_pirate(aes(colour = neighb, fill = neighb),
-              show.legend   = TRUE,
-              points_params = list(alpha = 1, size = 3),
-              lines_params  = list(size = 0.9)) +
+  geom_pirate(
+    aes(colour = neighb, fill = neighb),
+    show.legend = TRUE,
+    points_params = list(alpha = 1, size = 3),
+    lines_params  = list(size = 0.9)
+  ) +
   scale_color_discrete(name = "Word-form neighbors:") +
   scale_fill_discrete(name = "Word-form neighbors:") +
-  scale_x_discrete(
-    name   = "Test session",
-    breaks = c("1", "2"),           # use c("1","2","3") if you have 3 sessions
-    labels = c("Same day", "Next day")
-    # labels = c("Same day","Next day","Week later") for 3 sessions
-  ) +
+  scale_x_discrete(name = "Test session") +   # <-- no breaks/labels needed
   scale_y_continuous(
-  name   = "Proportion correct",
-  breaks = seq(0, 1, by = 0.2),
-  limits = c(0, 1)
+    name = "Proportion correct",
+    breaks = seq(0, 1, by = 0.2),
+    limits = c(0, 1)
   ) +
   theme(
-    legend.position       = "top",
-    legend.title          = element_text(size = 14),
-    legend.text           = element_text(size = 14),
+    legend.position = "top",
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 14),
     legend.box.background = element_rect(colour = "black"),
-    strip.text            = element_text(size = 20),
-    axis.title            = element_text(size = 18),
-    axis.text             = element_text(size = 14)
+    strip.text = element_text(size = 20),
+    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 14)
   ) +
   geom_hline(yintercept = 0.50, linetype = "dashed")
 
 print(formGraph)
 
 ```
+
+
 ```{r}
 # Save as a ggplot object
 saveRDS(formGraph, file = "formGraph.rds")
@@ -485,7 +484,7 @@ newgraph
 ```
 
 
-![](James21_Graph.jpeg){fig-cap="Form recognition results from James et al. (2021)" width=100%}
+![](James21_Graph.jpeg){fig-cap="Form recognition results from James et al. (2021)" width=90%}
 
 ### Descriptive Results
 
