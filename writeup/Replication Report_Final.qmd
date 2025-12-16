@@ -141,6 +141,10 @@ The current pilot B raw data can be found [here.](https://github.com/psych251/ja
 
 The current pilot B clean data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_cleandata)
 
+The full raw data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_rawdata)
+
+The full clean data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_cleandata)
+
 The drafted analysis script can be found [here.](https://github.com/psych251/james2021/blob/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/analysis/PilotAnalysis.Rmd)
 
 
