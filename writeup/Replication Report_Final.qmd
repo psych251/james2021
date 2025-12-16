@@ -141,14 +141,9 @@ The current pilot B raw data can be found [here.](https://github.com/psych251/ja
 
 The current pilot B clean data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_cleandata)
 
-The full raw data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_rawdata)
+The full raw data can be found [here.](https://github.com/psych251/james2021/tree/e77300292a2c0629b7eb58e65b88b2d1d95f428c/data/fulldata/raw)
 
-The full clean data can be found [here.](https://github.com/psych251/james2021/tree/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/pilot/PilotB_cleandata)
-
-The drafted analysis script can be found [here.](https://github.com/psych251/james2021/blob/70c74b21e44012308e57eb8eeb9dfe5976fce11f/data/analysis/PilotAnalysis.Rmd)
-
-
-
+The full clean data can be found [here.](https://github.com/psych251/james2021/tree/e77300292a2c0629b7eb58e65b88b2d1d95f428c/data/fulldata/clean)
 
 
 ### Confirmatory analysis
@@ -481,10 +476,6 @@ sessionInfo()
 
 ```
 
-
-### Exploratory analyses
-
-Any follow-up analyses desired (not required).
 
 ## Results/Discussion
 
